@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đề kiểm tra - Quản trị quy trình</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a1a2e;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+            flex-wrap: wrap;
+        }
+
+        .stats span {
+            background: #f0f0f0;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .stats .correct { background: #d4edda; color: #155724; }
+        .stats .wrong { background: #f8d7da; color: #721c24; }
+        .stats .remaining { background: #fff3cd; color: #856404; }
+
+        .question-area {
+            margin: 20px 0;
+        }
+
+        .question-type-badge {
+            display: inline-block;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .question-type-badge.single { background: #e3f2fd; color: #1976d2; }
+        .question-type-badge.multiple { background: #f3e5f5; color: #7b1fa2; }
+        .question-type-badge.matching { background: #fff3e0; color: #e65100; }
+        .question-type-badge.ordering { background: #e8f5e9; color: #2e7d32; }
+        .question-type-badge.essay { background: #fce4ec; color: #c62828; }
+
+        .main-question {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            line-height: 1.6;
+        }
+
+        .main-question .q-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        /* Style cho câu trắc nghiệm */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .option-box {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-box:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .option-box input[type="radio"],
+        .option-box input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+        }
+
+        .option-box label {
+            font-size: 15px;
+            color: #333;
+            cursor: pointer;
+            flex: 1;
+            line-height: 1.5;
+        }
+
+        .option-box .option-letter {
+            display: inline-block;
+            background: #e9ecef;
+            color: #666;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .option-box.selected {
+            background: #e3f2fd;
+            border-color: #667eea;
+        }
+
+        .option-box.correct-answer {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .option-box.wrong-answer {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .option-box.disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Style cho câu ghép nối */
+        .matching-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .matching-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .matching-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+        }
+
+        .matching-item .label {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .matching-item select {
+            padding: 8px 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            min-width: 180px;
+        }
+
+        .matching-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .matching-item select:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .matching-item .result-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .matching-item.correct { border-color: #28a745; background: #f0fff4; }
+        .matching-item.wrong { border-color: #dc3545; background: #fff5f5; }
+
+        /* Style cho câu sắp xếp */
+        .ordering-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ordering-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+
+        .ordering-item:hover {
+            background: #e9ecef;
+        }
+
+        .ordering-item .drag-handle {
+            cursor: grab;
+            color: #999;
+            font-size: 18px;
+        }
+
+        .ordering-item .order-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .ordering-item .content {
+            flex: 1;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .ordering-item.dragging {
+            opacity: 0.5;
+        }
+
+        .ordering-item.drag-over {
+            border-color: #667eea;
+            background: #e3f2fd;
+        }
+
+        /* Nút bấm */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-box.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .result-box.wrong {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .result-box .explanation {
+            font-weight: normal;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .question-counter {
+            text-align: center;
+            font-size: 14px;
+            color: #999;
+            margin-top: 15px;
+        }
+
+        /* Finish screen */
+        .finish-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .finish-screen h2 {
+            font-size: 32px;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+
+        .finish-screen .result-summary {
+            font-size: 18px;
+            color: #333;
+            line-height: 2;
+        }
+
+        .finish-screen .result-summary .big-number {
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .finish-screen .result-summary .correct-text { color: #28a745; }
+        .finish-screen .result-summary .wrong-text { color: #dc3545; }
+
+        .finish-screen .restart-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 18px;
+        }
+
+        .essay-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #ffc107;
+            margin-top: 10px;
+        }
+
+        .essay-box .essay-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .essay-box .essay-content {
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .header { flex-direction: column; gap: 10px; }
+            .stats { flex-wrap: wrap; justify-content: center; }
+            .btn { min-width: 100%; }
+            .matching-grid { grid-template-columns: 1fr; }
+            .matching-item select { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">📚 Đề kiểm tra - Quản trị quy trình</div>
+            <div class="stats">
+                <span class="correct">✅ Đúng: <span id="correctCount">0</span></span>
+                <span class="wrong">❌ Sai: <span id="wrongCount">0</span></span>
+                <span class="remaining">📌 Còn lại: <span id="remainingCount">0</span></span>
+            </div>
+        </div>
+
+        <!-- Question Area -->
+        <div class="question-area" id="questionArea">
+            <div id="questionTypeBadge"></div>
+            <div class="main-question" id="mainQuestion"></div>
+            <div id="optionsContainer"></div>
+        </div>
+
+        <!-- Result Box -->
+        <div class="result-box" id="resultBox">
+            <div id="resultMessage"></div>
+            <div class="explanation" id="resultExplanation"></div>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-bar">
+            <div class="fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        
+        <div class="question-counter" id="questionCounter"></div>
+
+        <!-- Buttons -->
+        <div class="button-group" id="buttonGroup">
+            <button class="btn btn-primary" id="checkBtn" onclick="checkAnswer()">✅ Kiểm tra</button>
+            <button class="btn btn-success" id="nextBtn" onclick="nextQuestion()" style="display:none">➡️ Câu tiếp theo</button>
+            <button class="btn btn-danger" onclick="resetAll()">🔄 Làm lại</button>
+        </div>
+    </div>
+
+    <script>
+        // ====== DỮ LIỆU CÂU HỎI TỪ FILE ======
+        const ALL_QUESTIONS = [
+            // ===== CÂU 1: 1 ĐÁP ÁN =====
+            {
+                id: 1,
+                type: 'single',
+                question: 'К категории "Операционных процессов" в Методологии APQC\'s Process Classification Framework относится:',
+                options: [
+                    'a. Управление финансовыми ресурсами',
+                    'b. Развитие и управление человеческим капиталом',
+                    'c. Управление информационными технологиями',
+                    'd. Управление денежными ресурсами',
+                    'e. Разработка стратегии'
+                ],
+                answer: [4], // e
+                explanation: 'Разработка стратегии относится к операционным процессам в APQC PCF'
+            },
+
+            // ===== CÂU 2: 1 ĐÁP ÁN =====
+            {
+                id: 2,
+                type: 'single',
+                question: 'Восьмипроцессная модель предполагает выделение:',
+                options: [
+                    'a. Только 24 процессов, к которым сводятся все процессы компании',
+                    'b. Только 72 процессов, к которым сводятся все процессы компании',
+                    'c. Только 9 процессов, к которым сводятся все процессы компании',
+                    'd. Только 8 процессов, к которым сводятся все процессы компании'
+                ],
+                answer: [3], // d
+                explanation: 'Восьмипроцессная модель выделяет ровно 8 процессов'
+            },
+
+            // ===== CÂU 3: 1 ĐÁP ÁN =====
+            {
+                id: 3,
+                type: 'single',
+                question: 'Внешние потребители --- это:',
+                options: [
+                    'a. Те, кто находится вне рамок организации, которая реализует бизнес-процесс',
+                    'b. Любое физическое и юридическое лицо',
+                    'c. Те, кто является частью организации, которая реализует бизнес-процесс'
+                ],
+                answer: [0], // a
+                explanation: 'Внешние потребители находятся вне организации'
+            },
+
+            // ===== CÂU 4: 1 ĐÁP ÁN =====
+            {
+                id: 4,
+                type: 'single',
+                question: 'Количественная мера заданного атрибута системы, компоненты или процесса называется:',
+                options: [
+                    'a. Показатель',
+                    'b. Индикатор',
+                    'c. Величина',
+                    'd. Метрика'
+                ],
+                answer: [3], // d
+                explanation: 'Метрика - это количественная мера атрибута'
+            },
+
+            // ===== CÂU 5: 1 ĐÁP ÁN =====
+            {
+                id: 5,
+                type: 'single',
+                question: 'В методологии описания бизнес-деятельности организации, разработанной BAAN, Модель метаструктуры предприятия (ESM --- Enterprise Structure Model) описывает:',
+                options: [
+                    'a. Бизнес-процессы компании в стандарте WFD',
+                    'b. Функции, выполняемые в компании и их иерархию',
+                    'c. Географически распределенную структуру организации',
+                    'd. Бизнес-процессы компании в стандарте DFD'
+                ],
+                answer: [2], // c
+                explanation: 'ESM описывает географически распределенную структуру организации'
+            },
+
+            // ===== CÂU 6: 1 ĐÁP ÁN =====
+            {
+                id: 6,
+                type: 'single',
+                question: 'В методологии описания бизнес-деятельности организации, разработанной BAAN, Модель управления (BCM --- Business Control Model) описывает:',
+                options: [
+                    'a. Географически распределенную структуру организации',
+                    'b. Бизнес-процессы компании в стандарте DFD',
+                    'c. Бизнес-процессы компании в стандарте WFD',
+                    'd. Функции, выполняемые в компании и их иерархию'
+                ],
+                answer: [3], // d
+                explanation: 'BCM описывает функции и их иерархию'
+            },
+
+            // ===== CÂU 7: 1 ĐÁP ÁN =====
+            {
+                id: 7,
+                type: 'single',
+                question: 'Метод расчета себестоимости продукта, который отличается от традиционного тем, что фокусируется на подсчете стоимости процессов, необходимых для производства продукта или предоставления услуги, а не на разделении затрат на прямые и косвенные и группировке этих затрат по статьям калькуляции, называется:',
+                options: [
+                    'a. Функционально-стоимостный анализ',
+                    'b. Построение дерева решений',
+                    'c. Имитационное моделирование',
+                    'd. Причинно-следственный анализ'
+                ],
+                answer: [0], // a
+                explanation: 'Функционально-стоимостный анализ (ABC) фокусируется на подсчете стоимости процессов'
+            },
+
+            // ===== CÂU 8: 1 ĐÁP ÁN =====
+            {
+                id: 8,
+                type: 'single',
+                question: 'К категории "Процессов поддержки и управления" в Методологии APQC\'s Process Classification Framework относится:',
+                options: [
+                    'a. Разработка продуктов',
+                    'b. Управление обслуживанием клиентов',
+                    'c. Управление услугами',
+                    'd. Разработка услуг',
+                    'e. Приобретение, строительство и управление имуществом'
+                ],
+                answer: [4], // e
+                explanation: 'Приобретение, строительство и управление имуществом относится к процессам поддержки'
+            },
+
+            // ===== CÂU 9: 1 ĐÁP ÁN =====
+            {
+                id: 9,
+                type: 'single',
+                question: 'Сущность системного подхода к управлению организацией заключается в следующем:',
+                options: [
+                    'a. не предполагает осуществления планирования и управления',
+                    'b. управление организацией заключается в рассмотрении деятельности любой компании как системы взаимосвязанных и взаимодействующих процессов, связанных с миссией и целями организации',
+                    'c. организация рассматривается как система, т.е. совокупность взаимосвязанных элементов, обладающая входом и выходом, а также связью с окружающей средой',
+                    'd. деятельность организации рассматривается как совокупность функций, которые нужно выполнить для достижения ее целей'
+                ],
+                answer: [2], // c
+                explanation: 'Системный подход рассматривает организацию как систему с входом, выходом и связью с окружающей средой'
+            },
+
+            // ===== CÂU 10: 1 ĐÁP ÁN =====
+            {
+                id: 10,
+                type: 'single',
+                question: 'Выберите вариант определения основного бизнес-процесса:',
+                options: [
+                    'a. Бизнес-процессы, прямой целью которых является управление деятельностью организации',
+                    'b. Бизнес-процессы, которые создают продукт, представляющий ценность для внешнего клиента',
+                    'c. Бизнес-процессы, которые поддерживают инфраструктуру организации',
+                    'd. Бизнес-процессы, целью которых является получение прибыли в долгосрочной перспективе'
+                ],
+                answer: [1], // b
+                explanation: 'Основные бизнес-процессы создают ценность для внешнего клиента'
+            },
+
+            // ===== CÂU 11: GHÉP NỐI (MATCHING) =====
+            {
+                id: 11,
+                type: 'matching',
+                question: 'Соотнесите области знаний стандарта PMBOK с их англоязычной версией:',
+                matchPairs: [
+                    { left: 'Управление заинтересованными сторонами проекта', right: 'Project Stakeholder Management' },
+                    { left: 'Управление коммуникациями проекта', right: 'Project Communications Management' },
+                    { left: 'Управление закупками проекта', right: 'Project Procurement Management' },
+                    { left: 'Управление рисками проекта', right: 'Project Risk Management' }
+                ],
+                matchOptions: [
+                    'Project Stakeholder Management',
+                    'Project Communications Management',
+                    'Project Procurement Management',
+                    'Project Risk Management',
+                    'Project Scope Management' // dummy
+                ],
+                answer: [0, 1, 2, 3], // index in matchOptions
+                explanation: 'Правильное соответствие областей знаний PMBOK'
+            },
+
+            // ===== CÂU 12: GHÉP NỐI =====
+            {
+                id: 12,
+                type: 'matching',
+                question: 'Соотнесите типы моделей ARIS с их русскоязычным названием:',
+                matchPairs: [
+                    { left: 'FT', right: 'Функциональная модель (Function Tree)' },
+                    { left: 'OC', right: 'Организационная схема (Organizational Chart)' },
+                    { left: 'eEPC', right: 'Событийно-процессная модель (Extended Event Driven Process Chain)' },
+                    { left: 'VACD', right: 'Диаграмма цепочки добавленной стоимости' }
+                ],
+                matchOptions: [
+                    'Функциональная модель (Function Tree)',
+                    'Организационная схема (Organizational Chart)',
+                    'Событийно-процессная модель (Extended Event Driven Process Chain)',
+                    'Диаграмма цепочки добавленной стоимости'
+                ],
+                answer: [0, 1, 2, 3],
+                explanation: 'Правильное соответствие моделей ARIS'
+            },
+
+            // ===== CÂU 13: SẮP XẾP =====
+            {
+                id: 13,
+                type: 'ordering',
+                question: 'Упорядочить уровни процессной зрелости Gartner сверху вниз, начиная с первого уровня:',
+                orderItems: [
+                    'Динамическая бизнес-структура (5)',
+                    'Локальное процессное управление и автоматизация (2)',
+                    'Управление цепочкой добавленной стоимости (4)',
+                    'Заинтересованность в процессах (1)',
+                    'Управление и автоматизация межпроцессного взаимодействия (3)'
+                ],
+                // Đáp án đúng: [1, 2, 3, 4, 5] tương ứng với thứ tự đúng
+                correctOrder: [3, 1, 4, 2, 0], // index trong orderItems
+                explanation: 'Правильный порядок: 1. Заинтересованность, 2. Локальное управление, 3. Межпроцессное взаимодействие, 4. Цепочка стоимости, 5. Динамическая структура'
+            },
+
+            // ===== CÂU 14: GHÉP NỐI (đã sửa) =====
+            {
+                id: 14,
+                type: 'matching',
+                question: 'Соотнесите тип элемента "Задача" и его название:',
+                matchPairs: [
+                    { left: 'Элемент 1 (иконка с силуэтом человека)', right: 'Пользовательская задача' },
+                    { left: 'Элемент 2 (иконка с рукой)', right: 'Ручное исполнение' },
+                    { left: 'Элемент 3 (иконка с таблицей)', right: 'Бизнес-правило' },
+                    { left: 'Элемент 4 (иконка с шестеренками)', right: 'Сервис' }
+                ],
+                matchOptions: [
+                    'Бизнес-правило',
+                    'Ручное исполнение',
+                    'Сервис',
+                    'Сценарий',
+                    'Пользовательская задача'
+                ],
+                answer: [4, 1, 0, 2],
+                explanation: 'Правильное соответствие элементов задачи'
+            },
+
+            // ===== CÂU 16: GHÉP NỐI =====
+            {
+                id: 16,
+                type: 'matching',
+                question: 'Соотнесите элемент из BPMN и его перевод:',
+                matchPairs: [
+                    { left: 'Activity', right: 'задача' },
+                    { left: 'Gateway', right: 'шлюз или условие' },
+                    { left: 'Event', right: 'событие' },
+                    { left: 'Data Object', right: 'объект данных' }
+                ],
+                matchOptions: [
+                    'объект данных',
+                    'событие',
+                    'шлюз или условие',
+                    'задача'
+                ],
+                answer: [3, 2, 1, 0],
+                explanation: 'Правильный перевод элементов BPMN'
+            },
+
+            // ===== CÂU TỰ LUẬN 1 =====
+            {
+                id: 'essay1',
+                type: 'essay',
+                question: 'В рамках выполнения цикла управления бизнес-процесса есть этап проектирования бизнес-процесса. Этап проектирования может быть реализован через три разных подхода. Компания ООО «ИТ-технологии» выбирает из этих трех подходов один, который будет реализовывать. Укажите, из каких трех подходов к проектированию процессов выбирает ООО «ИТ-технологии» (перечислите их через запятую)',
+                essayHint: 'Три подхода к проектированию процессов: ...'
+            },
+
+            // ===== CÂU TỰ LUẬN 2 =====
+            {
+                id: 'essay2',
+                type: 'essay',
+                question: 'Руководство компании ООО «ИТ-Вектор» по разработке программных продуктов решило перейти на процессное управление и начать с построения карты процессов, на которой нужно отразить основные процессы, бизнес-процессы управления и обеспечивающие бизнес-процессы. Укажите две отличительных особенности бизнес-процессов управления, которые позволяют их выявить среди всех остальных процессов организации.',
+                essayHint: 'Две отличительные особенности бизнес-процессов управления: ...'
+            },
+
+            // ===== CÂU TỰ LUẬN 3 =====
+            {
+                id: 'essay3',
+                type: 'essay',
+                question: 'На рисунке представлены три различных варианта попадания целевого (желаемого) значения времени исполнения бизнес-процесса Tц в интервалы 1, 2 и 3. При каком из вариантов: а), б) или в), не нужно предпринимать действия для снижения времени выполнения операций/функций, времени ожидания между операциями/функциями, при условии, что Tпmin --- это текущее минимальное время выполнения процесса, а Tпmax текущее максимальное время выполнения процесса? Ответ поясните.',
+                essayHint: 'Ответ: ... Пояснение: ...'
+            },
+
+            // ===== CÂU TỰ LUẬN 4 =====
+            {
+                id: 'essay4',
+                type: 'essay',
+                question: 'Представлена модель бизнес-процесса, определить время выполнения всего бизнес-процесса с учетом вероятности ветвей процесса, рассчитав отдельно время выполнения основной ветви процесса, время выполнения альтернативной ветви процесса, время выполнения всего процесса с учетом вероятности. Основная ветвь процесса начинается с события «Наступил срок формирования квартальной отчетности», а завершается «Квартальный отчет согласован». Вероятность того, что бизнес-процесс пойдет по этой ветви, 90%. Альтернативная ветвь бизнес-процесса начинается с события «Наступил срок формирования квартальной отчетности», а завершается «Причины сформулированы».',
+                essayHint: 'Расчет: Основная ветвь: ... Альтернативная ветвь: ... Итого: ...'
+            }
+        ];
+
+        // ====== BIẾN TOÀN CỤC ======
+        let questions = [];
+        let currentIndex = 0;
+        let totalCorrect = 0;
+        let totalWrong = 0;
+        let isAnswered = false;
+        let userAnswers = [];
+        let answeredQuestions = new Set();
+        let questionAttempts = new Map(); // Lưu số lần đã làm mỗi câu
+        const MAX_ATTEMPTS = 3; // Giới hạn tối đa 3 lần làm 1 câu
+
+        // ====== INIT ======
+        function init() {
+            loadFromStorage();
+            if (questions.length === 0) {
+                // Chỉ lấy câu hỏi trắc nghiệm và ghép nối, bỏ tự luận
+                questions = ALL_QUESTIONS.filter(q => q.type !== 'essay');
+                // Random hóa thứ tự
+                shuffleArray(questions);
+                saveToStorage();
+            }
+            displayQuestion();
+            updateStats();
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        // ====== STORAGE ======
+        function saveToStorage() {
+            try {
+                const data = {
+                    questions: questions,
+                    totalCorrect: totalCorrect,
+                    totalWrong: totalWrong,
+                    currentIndex: currentIndex,
+                    answeredQuestions: Array.from(answeredQuestions),
+                    questionAttempts: Array.from(questionAttempts.entries())
+                };
+                localStorage.setItem('quizDataExam', JSON.stringify(data));
+            } catch (e) {
+                console.log('Lỗi lưu storage:', e);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem('quizDataExam');
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    questions = data.questions || [];
+                    totalCorrect = data.totalCorrect || 0;
+                    totalWrong = data.totalWrong || 0;
+                    currentIndex = data.currentIndex || 0;
+                    answeredQuestions = new Set(data.answeredQuestions || []);
+                    if (data.questionAttempts) {
+                        questionAttempts = new Map(data.questionAttempts);
+                    }
+                }
+            } catch (e) {
+                console.log('Lỗi load storage:', e);
+            }
+        }
+
+        // ====== SELECT QUESTION (Có giới hạn số lần) ======
+        function selectQuestion() {
+            if (questions.length === 0) return null;
+
+            // Lọc ra những câu chưa được trả lời đúng và chưa vượt quá số lần thử
+            let available = questions.filter((q, idx) => {
+                const attempts = questionAttempts.get(q.id) || 0;
+                return !answeredQuestions.has(q.id) && attempts < MAX_ATTEMPTS;
+            });
+
+            if (available.length === 0) {
+                // Nếu đã làm hết hoặc vượt quá số lần, kết thúc
+                return null;
+            }
+
+            // Ưu tiên câu có số lần thử nhiều nhất và difficulty cao
+            let maxAttempts = Math.max(...available.map(q => questionAttempts.get(q.id) || 0));
+            let candidates = available.filter(q => (questionAttempts.get(q.id) || 0) === maxAttempts);
+
+            // Trong số đó, ưu tiên câu có difficulty cao
+            let maxDifficulty = Math.max(...candidates.map(q => q.difficulty || 0));
+            candidates = candidates.filter(q => (q.difficulty || 0) === maxDifficulty);
+
+            return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
+        // ====== GET TYPE LABEL ======
+        function getTypeLabel(type) {
+            const map = {
+                'single': '🔘 1 đáp án',
+                'multiple': '☑️ Nhiều đáp án',
+                'matching': '🔗 Ghép nối',
+                'ordering': '📊 Sắp xếp',
+                'essay': '📝 Tự luận'
+            };
+            return map[type] || type;
+        }
+
+        function getTypeClass(type) {
+            const map = {
+                'single': 'single',
+                'multiple': 'multiple',
+                'matching': 'matching',
+                'ordering': 'ordering',
+                'essay': 'essay'
+            };
+            return map[type] || '';
+        }
+
+        // ====== DISPLAY QUESTION ======
+        function displayQuestion() {
+            const q = selectQuestion();
+
+            if (!q) {
+                // Đã hoàn thành tất cả câu hỏi
+                showFinishScreen();
+                return;
+            }
+
+            currentIndex = questions.indexOf(q);
+
+            // Cập nhật số lần thử
+            const attempts = questionAttempts.get(q.id) || 0;
+            questionAttempts.set(q.id, attempts + 1);
+
+            // Badge
+            const badge = document.getElementById('questionTypeBadge');
+            badge.className = `question-type-badge ${getTypeClass(q.type)}`;
+            badge.textContent = getTypeLabel(q.type);
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            const mainQ = document.getElementById('mainQuestion');
+            mainQ.innerHTML = `<span class="q-number">${q.id}</span> ${q.question}`;
+
+            // Reset state
+            isAnswered = false;
+            userAnswers = [];
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('resultBox').className = 'result-box';
+            document.getElementById('checkBtn').disabled = false;
+            document.getElementById('checkBtn').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'none';
+
+            // ====== LOẠI 1: 1 ĐÁP ÁN ======
+            if (q.type === 'single') {
+                const grid = document.createElement('div');
+                grid.className = 'options-grid';
+
+                const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                q.options.forEach((opt, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'option-box';
+
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = 'option';
+                    input.value = idx;
+                    input.id = `opt_${idx}`;
+
+                    const letterSpan = document.createElement('span');
+                    letterSpan.className = 'option-letter';
+                    letterSpan.textContent = letters[idx] || (idx + 1);
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `opt_${idx}`;
+                    label.textContent = opt;
+
+                    div.appendChild(input);
+                    div.appendChild(letterSpan);
+                    div.appendChild(label);
+
+                    div.addEventListener('click', function(e) {
+                        if (e.target.tagName !== 'INPUT') {
+                            const inp = this.querySelector('input');
+                            inp.checked = true;
+                            inp.dispatchEvent(new Event('change'));
+                        }
+                    });
+
+                    input.addEventListener('change', function() {
+                        document.querySelectorAll('.option-box').forEach(o => o.classList.remove('selected'));
+                        document.querySelectorAll('.option-box input[type="radio"]:checked').forEach(inp => {
+                            inp.closest('.option-box').classList.add('selected');
+                        });
+                    });
+
+                    grid.appendChild(div);
+                });
+
+                container.appendChild(grid);
+            }
+
+            // ====== LOẠI 2: MATCHING (GHÉP NỐI) ======
+            else if (q.type === 'matching') {
+                const grid = document.createElement('div');
+                grid.className = 'matching-grid';
+
+                const leftCol = document.createElement('div');
+                leftCol.className = 'matching-col';
+
+                const rightCol = document.createElement('div');
+                rightCol.className = 'matching-col';
+
+                // Tạo options cho select (bao gồm cả dummy)
+                const selectOptions = q.matchOptions.map((opt, idx) => {
+                    return { value: idx, label: opt };
+                });
+
+                q.matchPairs.forEach((pair, idx) => {
+                    // Left item
+                    const leftItem = document.createElement('div');
+                    leftItem.className = 'matching-item';
+                    leftItem.innerHTML = `<span class="label">${pair.left}</span>`;
+                    leftCol.appendChild(leftItem);
+
+                    // Right item với select
+                    const rightItem = document.createElement('div');
+                    rightItem.className = 'matching-item';
+                    rightItem.id = `match-item-${idx}`;
+
+                    const select = document.createElement('select');
+                    select.id = `match-select-${idx}`;
+                    select.innerHTML = '<option value="">-- Chọn --</option>';
+
+                    selectOptions.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.label;
+                        select.appendChild(option);
+                    });
+
+                    const resultSpan = document.createElement('span');
+                    resultSpan.className = 'result-text';
+                    resultSpan.id = `match-result-${idx}`;
+
+                    rightItem.appendChild(select);
+                    rightItem.appendChild(resultSpan);
+                    rightCol.appendChild(rightItem);
+
+                    // Lưu user answer
+                    select.addEventListener('change', function() {
+                        userAnswers[idx] = this.value !== '' ? parseInt(this.value) : null;
+                    });
+                });
+
+                grid.appendChild(leftCol);
+                grid.appendChild(rightCol);
+                container.appendChild(grid);
+
+                // Khởi tạo userAnswers
+                userAnswers = new Array(q.matchPairs.length).fill(null);
+            }
+
+            // ====== LOẠI 3: ORDERING (SẮP XẾP) ======
+            else if (q.type === 'ordering') {
+                const list = document.createElement('div');
+                list.className = 'ordering-list';
+                list.id = 'orderingList';
+
+                // Tạo mảng các item với thứ tự ban đầu
+                const items = q.orderItems.map((text, idx) => ({
+                    id: idx,
+                    text: text,
+                    currentOrder: idx
+                }));
+
+                // Random hóa thứ tự ban đầu
+                shuffleArray(items);
+
+                items.forEach((item, displayIdx) => {
+                    const div = document.createElement('div');
+                    div.className = 'ordering-item';
+                    div.draggable = true;
+                    div.dataset.id = item.id;
+
+                    div.innerHTML = `
+                        <span class="drag-handle">⠿</span>
+                        <span class="order-number">${displayIdx + 1}</span>
+                        <span class="content">${item.text}</span>
+                    `;
+
+                    // Drag events
+                    div.addEventListener('dragstart', function(e) {
+                        e.dataTransfer.setData('text/plain', this.dataset.id);
+                        this.classList.add('dragging');
+                    });
+
+                    div.addEventListener('dragend', function(e) {
+                        this.classList.remove('dragging');
+                        document.querySelectorAll('.ordering-item').forEach(el => {
+                            el.classList.remove('drag-over');
+                        });
+                    });
+
+                    div.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        this.classList.add('drag-over');
+                    });
+
+                    div.addEventListener('dragleave', function(e) {
+                        this.classList.remove('drag-over');
+                    });
+
+                    div.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('drag-over');
+
+                        const draggedId = e.dataTransfer.getData('text/plain');
+                        const draggedEl = document.querySelector(`.ordering-item[data-id="${draggedId}"]`);
+                        const dropEl = this;
+
+                        if (draggedEl !== dropEl) {
+                            const parent = dropEl.parentNode;
+                            const draggedIndex = Array.from(parent.children).indexOf(draggedEl);
+                            const dropIndex = Array.from(parent.children).indexOf(dropEl);
+
+                            if (draggedIndex < dropIndex) {
+                                parent.insertBefore(draggedEl, dropEl.nextSibling);
+                            } else {
+                                parent.insertBefore(draggedEl, dropEl);
+                            }
+
+                            // Cập nhật số thứ tự
+                            updateOrderNumbers();
+                        }
+                    });
+
+                    list.appendChild(div);
+                });
+
+                container.appendChild(list);
+                updateOrderNumbers();
+            }
+
+            // ====== LOẠI 4: ESSAY (TỰ LUẬN) ======
+            else if (q.type === 'essay') {
+                const div = document.createElement('div');
+                div.className = 'essay-box';
+                div.innerHTML = `
+                    <div class="essay-label">📝 Câu hỏi tự luận</div>
+                    <div class="essay-content">${q.essayHint || 'Hãy viết câu trả lời của bạn...'}</div>
+                    <textarea style="width:100%;min-height:120px;padding:12px;border:2px solid #dee2e6;border-radius:10px;margin-top:10px;font-size:14px;font-family:inherit;resize:vertical;" placeholder="Nhập câu trả lời của bạn..."></textarea>
+                `;
+                container.appendChild(div);
+                // Tự luận không cần kiểm tra, chỉ hiển thị
+                document.getElementById('checkBtn').disabled = true;
+                document.getElementById('checkBtn').style.display = 'none';
+                document.getElementById('nextBtn').style.display = 'block';
+                document.getElementById('nextBtn').textContent = '📖 Xem tiếp';
+                isAnswered = true;
+            }
+
+            // Cập nhật
+            updateProgress();
+            updateStats();
+            updateCounter();
+            saveToStorage();
+
+            // Ẩn/hiện nút Next
+            if (q.type === 'essay') {
+                document.getElementById('nextBtn').style.display = 'block';
+                document.getElementById('checkBtn').style.display = 'none';
+            }
+        }
+
+        function updateOrderNumbers() {
+            const items = document.querySelectorAll('.ordering-item');
+            items.forEach((el, idx) => {
+                const numSpan = el.querySelector('.order-number');
+                if (numSpan) numSpan.textContent = idx + 1;
+            });
+        }
+
+        function updateCounter() {
+            const total = questions.filter(q => q.type !== 'essay').length;
+            const done = answeredQuestions.size;
+            document.getElementById('questionCounter').textContent = `Đã hoàn thành: ${done}/${total} câu`;
+        }
+
+        // ====== CHECK ANSWER ======
+        function checkAnswer() {
+            if (isAnswered) return;
+            if (questions.length === 0) return;
+
+            const q = questions[currentIndex];
+            const resultBox = document.getElementById('resultBox');
+            const msg = document.getElementById('resultMessage');
+            const expl = document.getElementById('resultExplanation');
+
+            // ====== 1 ĐÁP ÁN ======
+            if (q.type === 'single') {
+                const checked = document.querySelector('#optionsContainer input[type="radio"]:checked');
+                if (!checked) {
+                    alert('⚠️ Vui lòng chọn 1 đáp án!');
+                    return;
+                }
+
+                const selected = parseInt(checked.value);
+                const correct = q.answer[0] === selected;
+
+                if (correct) {
+                    resultBox.className = 'result-box show correct';
+                    msg.innerHTML = '✅ Chính xác! 🎉';
+                    totalCorrect++;
+                    answeredQuestions.add(q.id);
+                    q.difficulty = Math.max(0, (q.difficulty || 0) - 1);
+                } else {
+                    resultBox.className = 'result-box show wrong';
+                    msg.innerHTML = '❌ Sai rồi! Hãy cố gắng hơn nhé!';
+                    totalWrong++;
+                    q.difficulty = (q.difficulty || 0) + 2;
+                    const correctText = q.options[q.answer[0]];
+                    expl.innerHTML = `📝 Đáp án đúng: <strong>${correctText}</strong>`;
+                }
+
+                // Highlight
+                document.querySelectorAll('.option-box').forEach((opt, idx) => {
+                    opt.classList.add('disabled');
+                    if (q.answer.includes(idx)) {
+                        opt.classList.add('correct-answer');
+                    }
+                    const inp = opt.querySelector('input');
+                    if (inp && inp.checked && !q.answer.includes(idx)) {
+                        opt.classList.add('wrong-answer');
+                    }
+                });
+            }
+
+            // ====== MATCHING (GHÉP NỐI) ======
+            else if (q.type === 'matching') {
+                // Kiểm tra đã chọn hết chưa
+                for (let i = 0; i < q.matchPairs.length; i++) {
+                    if (userAnswers[i] === null || userAnswers[i] === '') {
+                        alert(`⚠️ Vui lòng chọn đáp án cho tất cả các dòng!`);
+                        return;
+                    }
+                }
+
+                let allCorrect = true;
+                const correctAnswers = q.answer; // mảng index đúng
+
+                q.matchPairs.forEach((pair, idx) => {
+                    const select = document.getElementById(`match-select-${idx}`);
+                    const resultSpan = document.getElementById(`match-result-${idx}`);
+                    const itemDiv = document.getElementById(`match-item-${idx}`);
+                    const selected = parseInt(select.value);
+
+                    const isCorrect = selected === correctAnswers[idx];
+
+                    if (isCorrect) {
+                        itemDiv.classList.add('correct');
+                        itemDiv.classList.remove('wrong');
+                        resultSpan.innerHTML = '✅';
+                        resultSpan.style.color = '#28a745';
+                    } else {
+                        allCorrect = false;
+                        itemDiv.classList.add('wrong');
+                        itemDiv.classList.remove('correct');
+                        const correctText = q.matchOptions[correctAnswers[idx]];
+                        resultSpan.innerHTML = `❌ Đúng: ${correctText}`;
+                        resultSpan.style.color = '#dc3545';
+                    }
+
+                    select.disabled = true;
+                });
+
+                if (allCorrect) {
+                    resultBox.className = 'result-box show correct';
+                    msg.innerHTML = '✅ Chính xác! 🎉';
+                    totalCorrect++;
+                    answeredQuestions.add(q.id);
+                    q.difficulty = Math.max(0, (q.difficulty || 0) - 1);
+                } else {
+                    resultBox.className = 'result-box show wrong';
+                    msg.innerHTML = '❌ Chưa đúng! Hãy xem lại các đáp án sai.';
+                    totalWrong++;
+                    q.difficulty = (q.difficulty || 0) + 2;
+                    expl.innerHTML = q.explanation || '';
+                }
+            }
+
+            // ====== ORDERING (SẮP XẾP) ======
+            else if (q.type === 'ordering') {
+                const items = document.querySelectorAll('.ordering-item');
+                const userOrder = Array.from(items).map(el => parseInt(el.dataset.id));
+                const correctOrder = q.correctOrder;
+
+                let allCorrect = true;
+                items.forEach((el, idx) => {
+                    const id = parseInt(el.dataset.id);
+                    if (id !== correctOrder[idx]) {
+                        allCorrect = false;
+                        el.style.borderColor = '#dc3545';
+                        el.style.background = '#fff5f5';
+                    } else {
+                        el.style.borderColor = '#28a745';
+                        el.style.background = '#f0fff4';
+                    }
+                    el.style.cursor = 'default';
+                    el.draggable = false;
+                });
+
+                if (allCorrect) {
+                    resultBox.className = 'result-box show correct';
+                    msg.innerHTML = '✅ Chính xác! 🎉 Thứ tự đúng!';
+                    totalCorrect++;
+                    answeredQuestions.add(q.id);
+                    q.difficulty = Math.max(0, (q.difficulty || 0) - 1);
+                } else {
+                    resultBox.className = 'result-box show wrong';
+                    msg.innerHTML = '❌ Thứ tự chưa đúng! Hãy xem lại.';
+                    totalWrong++;
+                    q.difficulty = (q.difficulty || 0) + 2;
+                    const correctText = q.orderItems.map((text, idx) => 
+                        `${idx + 1}. ${text}`
+                    ).join('\n');
+                    expl.innerHTML = `📝 Thứ tự đúng:<br><pre style="background:#f8f9fa;padding:10px;border-radius:8px;margin-top:5px;font-size:13px;">${correctText}</pre>`;
+                }
+            }
+
+            isAnswered = true;
+            document.getElementById('checkBtn').disabled = true;
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'block';
+            document.getElementById('nextBtn').textContent = '➡️ Câu tiếp theo';
+
+            updateStats();
+            saveToStorage();
+        }
+
+        // ====== NEXT QUESTION ======
+        function nextQuestion() {
+            displayQuestion();
+        }
+
+        // ====== UPDATE STATS ======
+        function updateStats() {
+            document.getElementById('correctCount').textContent = totalCorrect;
+            document.getElementById('wrongCount').textContent = totalWrong;
+            const total = questions.filter(q => q.type !== 'essay').length;
+            const remaining = total - answeredQuestions.size;
+            document.getElementById('remainingCount').textContent = remaining;
+        }
+
+        function updateProgress() {
+            const total = questions.filter(q => q.type !== 'essay').length;
+            const done = answeredQuestions.size;
+            const pct = total > 0 ? (done / total * 100) : 0;
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        // ====== FINISH SCREEN ======
+        function showFinishScreen() {
+            const area = document.getElementById('questionArea');
+            const total = questions.filter(q => q.type !== 'essay').length;
+            const correct = totalCorrect;
+            const wrong = totalWrong;
+            const pct = total > 0 ? Math.round(correct / (correct + wrong) * 100) : 0;
+
+            area.innerHTML = `
+                <div class="finish-screen">
+                    <h2>🎉 Hoàn thành!</h2>
+                    <div class="result-summary">
+                        <p>Tổng số câu hỏi: <strong>${total}</strong></p>
+                        <p><span class="correct-text big-number">${correct}</span> ✅ Đúng</p>
+                        <p><span class="wrong-text big-number">${wrong}</span> ❌ Sai</p>
+                        <p>Tỷ lệ đúng: <strong>${pct}%</strong></p>
+                        ${pct >= 80 ? '<p style="color:#28a745;font-size:20px;">🌟 Xuất sắc! Bạn đã làm rất tốt!</p>' : ''}
+                        ${pct >= 60 && pct < 80 ? '<p style="color:#ffc107;font-size:20px;">💪 Khá tốt! Hãy cố gắng hơn!</p>' : ''}
+                        ${pct < 60 ? '<p style="color:#dc3545;font-size:20px;">📖 Cần ôn tập thêm!</p>' : ''}
+                    </div>
+                    <button class="btn btn-primary restart-btn" onclick="resetAll()">🔄 Làm lại từ đầu</button>
+                </div>
+            `;
+
+            document.getElementById('questionTypeBadge').innerHTML = '';
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('resultBox').classList.remove('show');
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('questionCounter').textContent = '✅ Đã hoàn thành!';
+        }
+
+        // ====== RESET ======
+        function resetAll() {
+            if (confirm('🔄 Bạn có chắc muốn làm lại từ đầu?')) {
+                // Reset tất cả dữ liệu
+                questions = ALL_QUESTIONS.filter(q => q.type !== 'essay');
+                shuffleArray(questions);
+                totalCorrect = 0;
+                totalWrong = 0;
+                currentIndex = 0;
+                answeredQuestions = new Set();
+                questionAttempts = new Map();
+
+                // Reset difficulty
+                questions.forEach(q => q.difficulty = 0);
+
+                saveToStorage();
+                location.reload();
+            }
+        }
+
+        // ====== KEYBOARD ======
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (!isAnswered && document.getElementById('checkBtn').style.display !== 'none') {
+                    checkAnswer();
+                } else if (isAnswered && document.getElementById('nextBtn').style.display !== 'none') {
+                    nextQuestion();
+                }
+            }
+        });
+
+        // ====== START ======
+        init();
+    </script>
+</body>
+</html>
